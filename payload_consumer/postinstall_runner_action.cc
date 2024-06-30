@@ -210,8 +210,14 @@ bool PostinstallRunnerAction::MountPartition(
   if (!source_path.empty()) {
     brillo::Blob chunk;
 
+    utils::ReadFileChunk(source_path, 0x400 + 0x38, sizeof(uint16_t), &chunk);
+    if (chunk[0] == 0x53 && chunk[1] == 0xEF) {
+      chunk.clear();
     utils::ReadFileChunk(source_path, 0x400 + 0x34, sizeof(uint16_t), &chunk);
     mount_count = *reinterpret_cast<uint16_t*>(chunk.data());
+    } else {
+      LOG(INFO) << source_path << " does not contain an ext4 filesystem.";
+    }
   }
 
   LOG(INFO) << source_path << " has been mounted R/W " << mount_count << " times.";
